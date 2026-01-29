@@ -1,0 +1,33 @@
+name: "🎯 Epic"
+description: "達成すべきゴールと提供価値を定義する親Issue"
+title: "[Epic] "
+labels: ["epic"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: ゴール
+      description: このEpicで達成したい状態を記述してください
+      placeholder: "例: ユーザーがメールアドレスとパスワードで安全にログインできる"
+    validations:
+      required: true
+
+  - type: textarea
+    id: value
+    attributes:
+      label: 提供価値
+      description: これが完了すると誰にどんな価値があるか
+      placeholder: "例: ユーザーが安心してサービスを利用できるようになる"
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: スコープ
+      description: 含めるものと含めないものを明確にしてください
+      placeholder: |
+        含める: 基本的なログイン/ログアウト
+        含めない: ソーシャルログイン（別Epicで対応）
+    validations:
+      required: true

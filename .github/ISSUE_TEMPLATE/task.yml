@@ -1,0 +1,24 @@
+name: "✅ Task"
+description: "Epicから切り分けられた具体的な作業単位"
+title: "[Task] "
+labels: ["task"]
+body:
+  - type: textarea
+    id: requirement
+    attributes:
+      label: 要件
+      description: このTaskで達成すべきことを記述してください
+      placeholder: "例: ログインAPIエンドポイント（POST /api/auth/login）を実装する"
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: 完了条件
+      description: 何ができたら完了か
+      placeholder: |
+        - [ ] 正しい認証情報でログインできる
+        - [ ] テストが通る
+    validations:
+      required: true
