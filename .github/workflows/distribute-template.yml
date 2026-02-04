@@ -1,0 +1,192 @@
+# Reusable Workflow: テンプレート配布
+#
+# 各配布元リポジトリの Caller Workflow から呼び出される共通ワークフロー。
+# git-xargs を使用して Organization 配下のリポジトリに PR を自動作成する。
+#
+# 使用例（Caller Workflow）:
+#   jobs:
+#     distribute:
+#       uses: Spectee/.github/.github/workflows/distribute-template.yml@main
+#       with:
+#         sync_dirs: '.claude,docs'
+#       secrets: inherit
+
+name: Distribute Template (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      sync_dirs:
+        description: '配布対象（カンマ区切り、例: .claude,docs）'
+        required: true
+        type: string
+      repos:
+        description: '配布先リポジトリ（カンマ区切り）。空欄で全リポジトリ'
+        required: false
+        type: string
+        default: ''
+      exclude_repos:
+        description: '除外リポジトリ（カンマ区切り）'
+        required: false
+        type: string
+        default: ''
+      dry_run:
+        description: 'Dry run（実際には配布しない）'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate GitHub App token
+        id: generate_token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout template repository
+        uses: actions/checkout@v4
+        with:
+          path: template
+
+      - name: Install git-xargs
+        env:
+          # バージョン固定（セキュリティ: 予期しない変更を防止）
+          GIT_XARGS_VERSION: v0.1.16
+        run: |
+          # OS に応じたバイナリ名を設定
+          OS_TYPE=$(uname -s)
+          case "$OS_TYPE" in
+            Darwin)
+              BINARY_NAME="git-xargs_darwin_amd64"
+              ;;
+            Linux)
+              BINARY_NAME="git-xargs_linux_amd64"
+              ;;
+            *)
+              echo "ERROR: Unsupported OS: $OS_TYPE" >&2
+              exit 1
+              ;;
+          esac
+
+          DOWNLOAD_URL="https://github.com/gruntwork-io/git-xargs/releases/download/${GIT_XARGS_VERSION}"
+
+          # バイナリとチェックサムをダウンロード
+          curl -sL "${DOWNLOAD_URL}/${BINARY_NAME}" -o git-xargs
+          curl -sL "${DOWNLOAD_URL}/SHA256SUMS" -o SHA256SUMS
+
+          # チェックサム検証（セキュリティ: 改ざん検知）
+          echo "Verifying checksum..."
+          EXPECTED=$(grep "${BINARY_NAME}" SHA256SUMS | awk '{print $1}')
+          ACTUAL=$(sha256sum git-xargs | awk '{print $1}')
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "ERROR: Checksum mismatch!" >&2
+            echo "Expected: $EXPECTED" >&2
+            echo "Actual:   $ACTUAL" >&2
+            exit 1
+          fi
+          echo "Checksum verified: $ACTUAL"
+
+          chmod +x git-xargs
+          sudo mv git-xargs /usr/local/bin/
+          rm SHA256SUMS
+
+      - name: Prepare repository list
+        id: prepare_repos
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          INPUT_REPOS: ${{ inputs.repos }}
+          INPUT_EXCLUDE: ${{ inputs.exclude_repos }}
+        run: |
+          REPOS_FILE=$(mktemp)
+          echo "repos_file=$REPOS_FILE" >> "$GITHUB_OUTPUT"
+
+          if [[ -n "$INPUT_REPOS" ]]; then
+            # 特定リポジトリのみ指定
+            echo "Using specified repositories: $INPUT_REPOS"
+            echo "$INPUT_REPOS" | tr ',' '\n' | while read -r repo; do
+              repo=$(echo "$repo" | xargs)  # trim whitespace
+              [[ -n "$repo" ]] && echo "Spectee/$repo" >> "$REPOS_FILE"
+            done
+            echo "use_repos_file=true" >> "$GITHUB_OUTPUT"
+          else
+            # 全リポジトリ対象（除外あり）
+            echo "use_repos_file=false" >> "$GITHUB_OUTPUT"
+
+            if [[ -n "$INPUT_EXCLUDE" ]]; then
+              echo "Excluding repositories: $INPUT_EXCLUDE"
+              # 除外リストを配列に変換
+              IFS=',' read -ra EXCLUDE_ARRAY <<< "$INPUT_EXCLUDE"
+
+              # 全リポジトリを取得して除外フィルタ
+              gh repo list Spectee --limit 1000 --json name --jq '.[].name' | while read -r repo; do
+                skip=false
+                for exclude in "${EXCLUDE_ARRAY[@]}"; do
+                  exclude=$(echo "$exclude" | xargs)
+                  if [[ "$repo" == "$exclude" ]]; then
+                    skip=true
+                    echo "Excluding: $repo"
+                    break
+                  fi
+                done
+                if [[ "$skip" == "false" ]]; then
+                  echo "Spectee/$repo" >> "$REPOS_FILE"
+                fi
+              done
+              echo "use_repos_file=true" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+          if [[ -s "$REPOS_FILE" ]]; then
+            echo "=== Target repositories ==="
+            cat "$REPOS_FILE"
+            echo "==========================="
+          fi
+
+      - name: Distribute to repositories
+        env:
+          GITHUB_OAUTH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          TEMPLATE_DIR: ${{ github.workspace }}/template
+          REPOS_FILE: ${{ steps.prepare_repos.outputs.repos_file }}
+          USE_REPOS_FILE: ${{ steps.prepare_repos.outputs.use_repos_file }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          SYNC_DIRS: ${{ inputs.sync_dirs }}
+          # ソースリンク用
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+        run: |
+          echo "=== Sync directories ==="
+          echo "$SYNC_DIRS"
+          echo "========================"
+
+          # コミットメッセージに日時とソースリンクを追加（JST: UTC+9）
+          TIMESTAMP=$(TZ='Asia/Tokyo' date +'%Y-%m-%d %H:%M JST')
+          COMMIT_MSG="chore: sync from ${GITHUB_REPOSITORY} ($TIMESTAMP)
+
+Source: $SOURCE_URL"
+
+          # git-xargs の基本オプション
+          GIT_XARGS_OPTS=(
+            --branch-name chore/sync-template
+            --commit-message "$COMMIT_MSG"
+            --skip-archived-repos
+          )
+
+          # リポジトリ指定方法
+          if [[ "$USE_REPOS_FILE" == "true" ]]; then
+            GIT_XARGS_OPTS+=(--repos "$REPOS_FILE")
+          else
+            GIT_XARGS_OPTS+=(--github-org Spectee)
+          fi
+
+          # dry-run
+          if [[ "$DRY_RUN" == "true" ]]; then
+            GIT_XARGS_OPTS+=(--dry-run)
+            echo "DRY RUN MODE - No changes will be pushed"
+          fi
+
+          git-xargs "${GIT_XARGS_OPTS[@]}" \
+            bash -c "TEMPLATE_DIR=$TEMPLATE_DIR SYNC_DIRS=$SYNC_DIRS $TEMPLATE_DIR/scripts/sync-template.sh"
