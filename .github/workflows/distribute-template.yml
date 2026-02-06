@@ -154,6 +154,44 @@ jobs:
             echo "==========================="
           fi
 
+      - name: Clean up stale branches
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          REPOS_FILE: ${{ steps.prepare_repos.outputs.repos_file }}
+          USE_REPOS_FILE: ${{ steps.prepare_repos.outputs.use_repos_file }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          # PRがオープンでない場合、古いブランチを削除
+          # これにより、closeされたPRの後も再配布が可能になる
+          BRANCH_NAME="chore/sync-template"
+
+          if [[ "$DRY_RUN" == "true" ]]; then
+            echo "DRY RUN: Skipping branch cleanup"
+            exit 0
+          fi
+
+          cleanup_repo() {
+            local repo="$1"
+            # PRの状態を確認（OPEN以外、または存在しない場合は削除対象）
+            pr_state=$(gh pr view "$BRANCH_NAME" --repo "$repo" --json state --jq '.state' 2>/dev/null || echo "NONE")
+
+            if [[ "$pr_state" != "OPEN" ]]; then
+              # ブランチが存在すれば削除
+              if gh api "repos/$repo/git/refs/heads/$BRANCH_NAME" &>/dev/null; then
+                gh api -X DELETE "repos/$repo/git/refs/heads/$BRANCH_NAME" 2>/dev/null || true
+                echo "Deleted stale branch in $repo (PR state: $pr_state)"
+              fi
+            else
+              echo "Keeping branch in $repo (PR is OPEN)"
+            fi
+          }
+
+          if [[ "$USE_REPOS_FILE" == "true" && -s "$REPOS_FILE" ]]; then
+            while IFS= read -r repo; do
+              cleanup_repo "$repo"
+            done < "$REPOS_FILE"
+          fi
+
       - name: Distribute to repositories
         env:
           GITHUB_OAUTH_TOKEN: ${{ steps.generate_token.outputs.token }}
