@@ -48,31 +48,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Prepare private key
-        id: prepare_key
-        env:
-          RAW_KEY: ${{ secrets.CODE_DISTRIBUTOR_APP_SECRET }}
-        run: |
-          # PEM ヘッダーがない場合は追加
-          if [[ "$RAW_KEY" != "-----BEGIN"* ]]; then
-            echo "Adding PEM headers to private key"
-            PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----"$'\n'"$RAW_KEY"$'\n'"-----END RSA PRIVATE KEY-----"
-          else
-            PRIVATE_KEY="$RAW_KEY"
-          fi
-          # マルチライン出力用
-          {
-            echo "key<<EOF"
-            echo "$PRIVATE_KEY"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
       - name: Generate GitHub App token
         id: generate_token
         uses: tibdex/github-app-token@v2
         with:
           app_id: ${{ secrets.CODE_DISTRIBUTOR_APP_ID }}
-          private_key: ${{ steps.prepare_key.outputs.key }}
+          private_key: ${{ secrets.CODE_DISTRIBUTOR_APP_SECRET }}
 
       - name: Checkout template repository
         uses: actions/checkout@v4
