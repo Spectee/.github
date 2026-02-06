@@ -223,6 +223,7 @@ jobs:
             --commit-message "$COMMIT_MSG"
             --pull-request-title "$PR_TITLE"
             --pull-request-description "$PR_BODY"
+            --draft
             --skip-archived-repos
           )
 
