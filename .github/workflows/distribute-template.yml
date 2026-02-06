@@ -35,6 +35,13 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      CODE_DISTRIBUTOR_APP_ID:
+        description: 'GitHub App の App ID'
+        required: true
+      CODE_DISTRIBUTOR_APP_SECRET:
+        description: 'GitHub App の秘密鍵（PEM形式）'
+        required: true
 
 jobs:
   distribute:
