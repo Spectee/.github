@@ -165,6 +165,10 @@ jobs:
           # ソースリンク用
           SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
         run: |
+          # git-xargs がコミット時に使用するユーザー情報を設定
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
           echo "=== Sync directories ==="
           echo "$SYNC_DIRS"
           echo "========================"
