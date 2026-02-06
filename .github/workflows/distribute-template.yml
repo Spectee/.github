@@ -115,10 +115,15 @@ jobs:
           if [[ -n "$INPUT_REPOS" ]]; then
             # 特定リポジトリのみ指定
             echo "Using specified repositories: $INPUT_REPOS"
-            echo "$INPUT_REPOS" | tr ',' '\n' | while read -r repo; do
+
+            # FIX: サブシェル問題を回避するため here-string を使用
+            while IFS= read -r repo || [[ -n "$repo" ]]; do
               repo=$(echo "$repo" | xargs)  # trim whitespace
-              [[ -n "$repo" ]] && echo "Spectee/$repo" >> "$REPOS_FILE"
-            done
+              if [[ -n "$repo" ]]; then
+                echo "Spectee/$repo" >> "$REPOS_FILE"
+              fi
+            done <<< "$(echo "$INPUT_REPOS" | tr ',' '\n')"
+
             echo "use_repos_file=true" >> "$GITHUB_OUTPUT"
           else
             # 全リポジトリ対象（除外あり）
@@ -148,11 +153,10 @@ jobs:
             fi
           fi
 
-          if [[ -s "$REPOS_FILE" ]]; then
-            echo "=== Target repositories ==="
-            cat "$REPOS_FILE"
-            echo "==========================="
-          fi
+          # デバッグ: ファイルの内容を確認
+          echo "=== REPOS_FILE content ($(wc -l < "$REPOS_FILE") lines) ==="
+          cat "$REPOS_FILE"
+          echo "==========================="
 
       - name: Clean up stale branches
         env:
@@ -228,7 +232,15 @@ jobs:
           )
 
           # リポジトリ指定方法
+          # FIX: USE_REPOS_FILE=true でも REPOS_FILE が空の場合は配布しない
           if [[ "$USE_REPOS_FILE" == "true" ]]; then
+            if [[ ! -s "$REPOS_FILE" ]]; then
+              echo "ERROR: REPOS_FILE is empty but USE_REPOS_FILE is true. Aborting to prevent accidental full-org distribution."
+              exit 1
+            fi
+            echo "=== Final REPOS_FILE verification ==="
+            cat "$REPOS_FILE"
+            echo "======================================"
             GIT_XARGS_OPTS+=(--repos "$REPOS_FILE")
           else
             GIT_XARGS_OPTS+=(--github-org Spectee)
@@ -239,6 +251,11 @@ jobs:
             GIT_XARGS_OPTS+=(--dry-run)
             echo "DRY RUN MODE - No changes will be pushed"
           fi
+
+          # デバッグ: 実行するコマンドを表示
+          echo "=== git-xargs command ==="
+          echo "git-xargs ${GIT_XARGS_OPTS[*]} bash -c ..."
+          echo "========================="
 
           git-xargs "${GIT_XARGS_OPTS[@]}" \
             bash -c "TEMPLATE_DIR=$TEMPLATE_DIR SYNC_DIRS=$SYNC_DIRS $TEMPLATE_DIR/scripts/sync-template.sh"
