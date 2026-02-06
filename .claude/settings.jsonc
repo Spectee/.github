@@ -1,0 +1,235 @@
+{
+  "enableAllProjectMcpServers": true,
+  "permissions": {
+    "allow": [
+      // Claude Codeの基本ツール
+      "WebFetch",     // Webコンテンツの取得
+      "WebSearch",    // Web検索
+      "Read",         // ファイル読み込み
+      "Write",        // ファイル書き込み
+      "Edit",         // ファイル編集
+      "Glob",         // ファイルパターン検索
+      "Grep",         // コンテンツ検索
+
+      // Node.js/JavaScriptパッケージマネージャー
+      "Bash(npm:*)",       // Node Package Manager
+      "Bash(npx:*)",       // npm package runner
+      "Bash(pnpm:*)",      // 高速なnpm代替
+
+      // Pythonパッケージマネージャー
+      "Bash(rye:*)",       // Rust製Pythonツール
+      "Bash(uv:*)",        // 超高速Pythonパッケージマネージャー
+      "Bash(uvx:*)",       // uvのパッケージ実行ツール
+      "Bash(pixi:*)",      // Conda代替のパッケージマネージャー
+
+      // OpenSpec関連
+      "Bash(openspec:*)",  // OpenSpec CLI
+
+      // バージョン管理
+      "Bash(git:*)",       // Gitバージョン管理
+      "Bash(gh:*)",        // GitHub CLI
+
+      // コンテナ
+      "Bash(docker:*)",         // Dockerコンテナ
+      "Bash(docker-compose:*)", // Docker Compose
+
+      // ビルドツール
+      "Bash(make:*)",      // Makeビルドツール
+      "Bash(cmake:*)",     // CMakeビルドシステム
+
+      // Rust
+      "Bash(cargo:*)",     // Rustパッケージマネージャー
+      "Bash(rustup:*)",    // Rustツールチェーンインストーラー
+
+      // Python
+      "Bash(python:*)",    // Python 2/3インタープリタ
+      "Bash(python3:*)",   // Python 3インタープリタ
+      "Bash(pip:*)",       // Python Package Installer
+      "Bash(pip3:*)",      // Python 3 Package Installer
+
+      // JavaScript Runtime
+      "Bash(node:*)",      // Node.jsランタイム
+      "Bash(deno:*)",      // Denoランタイム
+
+      // バージョン管理ツール
+      "Bash(mise:*)",      // 複数言語のバージョン管理（旧rtx）
+
+      // Infrastructure as Code
+      "Bash(cdk:*)", // Terraformインフラ管理
+
+      // クラウドCLI
+      "Bash(aws:*)",       // AWS CLI
+      "Bash(awslocal:*)",  // LocalStack用AWS CLI
+      "Bash(gcloud:*)",    // Google Cloud CLI
+
+      // 基本的なファイル操作
+      "Bash(ls:*)",        // ディレクトリ一覧表示
+      "Bash(pwd:*)",       // 現在のディレクトリパス表示
+      "Bash(which:*)",     // コマンドのパス検索
+      "Bash(where:*)",     // コマンドのパス検索（複数）
+      "Bash(echo:*)",      // テキスト出力
+      "Bash(cat:*)",       // ファイル内容表示
+      "Bash(head:*)",      // ファイルの先頭部分表示
+      "Bash(tail:*)",      // ファイルの末尾部分表示
+      "Bash(wc:*)",        // 行数/単語数/文字数カウント
+      "Bash(sort:*)",      // テキストのソート
+      "Bash(uniq:*)",      // 重複行の削除
+      "Bash(diff:*)",      // ファイル差分表示
+
+      // ファイル/ディレクトリ操作
+      "Bash(mkdir:*)",     // ディレクトリ作成
+      "Bash(touch:*)",     // 空ファイル作成/タイムスタンプ更新
+      "Bash(cp:*)",        // ファイル/ディレクトリコピー
+      "Bash(mv:*)",        // ファイル/ディレクトリ移動/リネーム
+      "Bash(rm:*)",        // ファイル/ディレクトリ削除
+
+      // 検索
+      "Bash(find:*)",      // ファイル検索
+      "Bash(grep:*)",      // テキストパターン検索
+      "Bash(rg:*)",        // ripgrep（高速grep）
+      "Bash(ag:*)",        // The Silver Searcher（高速grep）
+
+      // テキスト処理
+      "Bash(sed:*)",       // ストリームエディタ
+      "Bash(awk:*)",       // パターンスキャン/処理言語
+      "Bash(jq:*)",        // JSON処理
+      "Bash(yq:*)",        // YAML/XML/TOML処理
+
+      // システム情報
+      "Bash(date:*)",      // 日付/時刻表示
+      "Bash(export:*)",    // 環境変数のエクスポート
+      "Bash(source:*)",    // スクリプトの実行（現在のシェルで）
+
+      // ファイルシステム
+      "Bash(ln:*)",        // シンボリックリンク/ハードリンク作成
+      "Bash(tree:*)",      // ディレクトリツリー表示
+      "Bash(du:*)",        // ディスク使用量表示
+      "Bash(df:*)",        // ディスク空き容量表示
+
+      // プロセス管理
+      "Bash(ps:*)",        // プロセス一覧表示
+      "Bash(lsof:*)",      // 開いているファイル一覧
+
+      // ネットワーク診断
+      "Bash(ss:*)",        // ソケット統計表示
+      "Bash(ping:*)",      // ネットワーク疎通確認
+
+      // macOSクリップボード
+      "Bash(pbcopy:*)",    // クリップボードにコピー
+      "Bash(pbpaste:*)"   // クリップボードから貼り付け
+    ],
+    "deny": [
+      // 権限昇格の防止
+      "Bash(*sudo *:*)",              // sudo（通常のスペース）
+      "Bash(* sudo *:*)",             // sudo（前にスペース）
+      "Bash(*| sudo*:*)",             // パイプ経由のsudo
+      "Bash(*;sudo*:*)",              // セミコロン経由のsudo
+      "Bash(*&&sudo*:*)",             // AND経由のsudo
+      "Bash(su :*)",                  // ユーザー切り替え
+      "Bash(doas:*)",                 // sudo代替（OpenBSD）
+
+      // 危険なファイル削除の防止
+      "Bash(rm -rf .)",                // カレントディレクトリ削除
+      "Bash(rm -rf ./)",               // カレントディレクトリ削除
+      "Bash(*rm -rf /*:*)",            // ルート配下の削除
+      "Bash(*rm -rf ~:*)",             // ホームディレクトリ削除
+      "Bash(*rm -rf /home*:*)",        // /home削除
+      "Bash(*rm -rf /Users*:*)",       // /Users削除（macOS）
+      "Bash(*rm -rf /etc*:*)",         // /etc削除
+      "Bash(*rm -rf /var*:*)",         // /var削除
+      "Bash(*rm -rf /usr*:*)",         // /usr削除
+      "Bash(*rm -rf /bin*:*)",         // /bin削除
+      "Bash(*rm -rf /sbin*:*)",        // /sbin削除
+      "Bash(*rm -rf /System*:*)",      // /System削除（macOS）
+      "Bash(*rm -rf /Library*:*)",     // /Library削除（macOS）
+      "Bash(*rm -rf /Applications*:*)", // /Applications削除（macOS）
+      "Bash(rmdir:*)",                 // 空ディレクトリ削除コマンド
+      "Bash(shred:*)",                 // ファイルの安全な削除
+      "Bash(unlink:*)",                // ファイル削除（低レベル）
+
+      // 危険なパーミッション変更の防止
+      "Bash(*chmod 777*:*)",          // 全員に全権限付与
+      "Bash(*chmod -R 777*:*)",       // 再帰的に全権限付与
+
+      // システムファイルへの不正アクセス防止
+      "Bash(mv /* :*)",               // ルート配下の一括移動
+      "Bash(mv / :*)",                // ルートディレクトリ移動
+
+      // 危険なGit操作の防止
+      "Bash(git push --force:*)",     // force push
+      "Bash(git push -f:*)",          // force push（短縮形）
+      "Bash(git push origin --force:*)", // origin へのforce push
+      "Bash(git push origin -f:*)",   // origin へのforce push（短縮形）
+      "Bash(git reset --hard:*)",     // 強制リセット（変更を破棄）
+      "Bash(git clean -fd:*)",        // 未追跡ファイルの削除
+      "Bash(git clean -fdx:*)",       // 未追跡ファイルの削除（.gitignore含む）
+      "Bash(git checkout -- .:*)",    // 全変更の破棄
+
+      // システムシャットダウンの防止
+      "Bash(shutdown:*)",             // システムシャットダウン
+      "Bash(reboot:*)",               // システム再起動
+      "Bash(poweroff:*)",             // 電源オフ
+      "Bash(halt:*)",                 // システム停止
+      "Bash(init 0:*)",               // ランレベル0（シャットダウン）
+      "Bash(init 6:*)",               // ランレベル6（再起動）
+
+      // ディスク破壊操作の防止
+      "Bash(mkfs:*)",                 // ファイルシステム作成（データ消去）
+      "Bash(fdisk:*)",                // パーティション編集
+      "Bash(parted:*)",               // パーティション管理
+      "Bash(dd if=:*)",               // 低レベルディスク書き込み
+
+      // ユーザー管理の防止
+      "Bash(passwd:*)",               // パスワード変更
+      "Bash(visudo:*)",               // sudoers編集
+      "Bash(adduser:*)",              // ユーザー追加
+      "Bash(useradd:*)",              // ユーザー追加（低レベル）
+      "Bash(deluser:*)",              // ユーザー削除
+      "Bash(userdel:*)",              // ユーザー削除（低レベル）
+      "Bash(groupadd:*)",             // グループ追加
+      "Bash(groupdel:*)",             // グループ削除
+      "Bash(usermod:*)",              // ユーザー設定変更
+      "Bash(chpasswd:*)",             // パスワード一括変更
+
+      // ファイアウォール無効化の防止
+      "Bash(iptables -F:*)",          // iptablesルール削除
+      "Bash(iptables --flush:*)",     // iptablesルール削除
+      "Bash(ufw disable:*)"           // UFW無効化
+    ],
+    "ask": [
+      // 実行前に確認が必要なコマンド
+      "Bash(chmod:*)",                // ファイル権限変更（確認必要）
+      "Bash(chown:*)",                // ファイル所有者変更（確認必要）
+      "Bash(cdk deploy:*)",           // CDKデプロイ（確認必要）
+      "Bash(cdk destroy:*)",          // CDK削除（確認必要）
+
+      // アーカイブ
+      "Bash(tar:*)",       // tar形式のアーカイブ
+      "Bash(unzip:*)",     // ZIP展開
+      "Bash(zip:*)",       // ZIP圧縮
+      "Bash(gzip:*)",      // gzip圧縮
+      "Bash(gunzip:*)",    // gzip展開
+
+      // ネットワーク
+      "Bash(curl:*)",                 // URLからのデータ転送
+      "Bash(wget:*)",                // URLからのデータダウンロード
+
+      // データベースクライアント
+      "Bash(sqlite3:*)",              // SQLiteクライアント
+      "Bash(psql:*)",                 // PostgreSQLクライアント
+      "Bash(mysql:*)",                // MySQLクライアント
+
+      // AWS CLI削除系コマンドの禁止
+      "Bash(aws * delete-*:*)",        // AWSリソース削除全般
+      "Bash(aws * terminate-*:*)",     // AWSリソース終了
+      "Bash(aws * remove-*:*)",        // AWSリソース削除
+      "Bash(aws s3 rm *:*)",           // S3オブジェクト削除
+      "Bash(aws s3 rb *:*)",           // S3バケット削除
+      "Bash(awslocal * delete-*:*)",   // LocalStack削除系
+      "Bash(awslocal * terminate-*:*)", // LocalStack終了系
+      "Bash(awslocal * remove-*:*)",   // LocalStack削除系
+      "Bash(awslocal s3 rm *:*)",      // LocalStack S3削除
+      "Bash(awslocal s3 rb *:*)"       // LocalStack S3バケット削除
+    ]
+  }
+}
