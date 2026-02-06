@@ -175,12 +175,16 @@ jobs:
 
           # コミットメッセージに日時とソースリンクを追加（JST: UTC+9）
           TIMESTAMP=$(TZ='Asia/Tokyo' date +'%Y-%m-%d %H:%M JST')
-          COMMIT_MSG="chore: sync from ${GITHUB_REPOSITORY} ($TIMESTAMP)"$'\n\n'"Source: $SOURCE_URL"
+          PR_TITLE="chore: sync from ${GITHUB_REPOSITORY} ($TIMESTAMP)"
+          COMMIT_MSG="${PR_TITLE}"$'\n\n'"Source: $SOURCE_URL"
+          PR_BODY="Source: $SOURCE_URL"
 
           # git-xargs の基本オプション
           GIT_XARGS_OPTS=(
             --branch-name chore/sync-template
             --commit-message "$COMMIT_MSG"
+            --pull-request-title "$PR_TITLE"
+            --pull-request-description "$PR_BODY"
             --skip-archived-repos
           )
 
